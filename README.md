@@ -32,6 +32,7 @@ Full API reference and guides: [docs.listingsapi.com](https://docs.listingsapi.c
 - [Connected accounts](#connected-accounts)
 - [Supporting APIs](#supporting-apis)
 - [Workflows: pre-built automations](#workflows-pre-built-automations)
+- [Method reference](#method-reference)
 - [Error handling](#error-handling)
 - [Configuration](#configuration)
 - [Examples and development](#examples-and-development)
@@ -314,6 +315,122 @@ print(report.review_summary, report.analytics, report.listings_health)
 audit = client.workflows.listings_health_audit(16808)
 print(f"Score: {audit.health_score}%, Issues: {audit.issue_count}")
 ```
+
+## Method reference
+
+### Supporting APIs (client-level)
+
+| Method | Description |
+|--------|-------------|
+| `client.plan_sites()` | Directories included in your plan |
+| `client.countries()` | Supported countries and states (ISO codes) |
+| `client.subcategories()` | Business categories (IDs for `locations.add`) |
+| `client.subscriptions()` | Active subscriptions for the account |
+
+### Locations
+
+| Method | Description |
+|--------|-------------|
+| `locations.list(first, after, before, last)` | List locations with cursor pagination |
+| `locations.retrieve(location_id)` | Fetch a single location by ID |
+| `locations.list_by_ids(location_ids)` | Fetch specific locations by ID |
+| `locations.list_by_store_codes(store_codes)` | Fetch locations by store code |
+| `locations.search(query, fields, first, after)` | Search by name, address, or store ID |
+| `locations.add(**fields)` | One-call create with keyword args and client-side validation |
+| `locations.create(input_dict)` | Create from a raw camelCase payload |
+| `locations.update(input_dict)` | Update fields on a location (pass `id` plus changes) |
+| `locations.archive(location_ids)` | Archive locations |
+| `locations.cancel_archive(location_ids, selection_type, changed_by)` | Cancel a pending archive |
+
+### Posts
+
+| Method | Description |
+|--------|-------------|
+| `posts.bulk_publish(**fields)` | One post to Google and Facebook across many locations |
+| `posts.create_announcement(**fields)` | Create an ANNOUNCEMENT post |
+| `posts.create_event(**fields)` | Create an EVENT post with title and date window |
+| `posts.create_offer(**fields)` | Create an OFFER post with coupon and terms |
+| `posts.create(body)` | Create from a raw flat payload |
+| `posts.retrieve(post_id)` | Get a post with per-site publish status and analytics |
+| `posts.delete(post_id)` | Delete a post from every published site |
+| `posts.list_for_location(location_id, tag, page, per_page)` | List post campaigns for a location |
+| `posts.bulk_retrieve(bulk_post_id)` | Get a bulk campaign with per-location status |
+| `posts.bulk_list_for_location(location_id, tag, page, per_page)` | List bulk campaigns touching a location |
+
+### Reviews
+
+| Method | Description |
+|--------|-------------|
+| `reviews.list(location_id, first, rating_filters, ...)` | List reviews/interactions with filters |
+| `reviews.details(interaction_ids)` | Detailed review data for specific interactions |
+| `reviews.respond(interaction_id, content)` | Reply to a review |
+| `reviews.edit_response(review_id, response_id, content)` | Edit a reply |
+| `reviews.archive_response(response_id)` | Archive a reply |
+| `reviews.settings(location_id)` | Review notification settings |
+| `reviews.edit_settings(location_id, site_urls)` | Update notification settings |
+| `reviews.site_config()` | Review site configuration for the account |
+| `reviews.phrases(location_ids, start_date, ...)` | Frequently used phrases across reviews |
+| `reviews.analytics.overview(location_id, start_date, end_date)` | Review analytics overview |
+| `reviews.analytics.timeline(location_id, ...)` | Review volume/rating over time |
+| `reviews.analytics.sites_stats(location_id, ...)` | Per-site review stats |
+
+### Listings
+
+| Method | Description |
+|--------|-------------|
+| `listings.premium(location_id)` | Premium directory listings |
+| `listings.voice(location_id)` | Voice assistant listings |
+| `listings.duplicates(location_id)` | Duplicate listings for a location |
+| `listings.all_duplicates(tag, page)` | Duplicates across all locations |
+| `listings.mark_duplicate(location_id, listing_item_ids)` | Mark listings as duplicates |
+| `listings.mark_not_duplicate(location_id, listing_item_ids)` | Unmark duplicates |
+| `listings.connect(location_id, listing_id, account_id)` | Connect a listing to a profile |
+| `listings.disconnect(location_id, site)` | Disconnect a listing |
+| `listings.create_gmb(location_id, ...)` | Create a Google Business Profile listing |
+
+### Analytics
+
+| Method | Description |
+|--------|-------------|
+| `analytics.google(location_id, from_date, to_date)` | Google Business Profile insights |
+| `analytics.bing(location_id, from_date, to_date)` | Bing Places insights |
+| `analytics.facebook(location_id, from_date, to_date)` | Facebook page insights |
+
+### Photos
+
+| Method | Description |
+|--------|-------------|
+| `photos.list(location_id)` | List photos for a location |
+| `photos.add(location_id, photos)` | Upload photos by URL |
+| `photos.remove(location_id, photo_ids)` | Delete photos |
+| `photos.star(location_id, media_ids, starred)` | Star or unstar photos |
+| `photos.upload_status(request_id)` | Status of a bulk photo upload |
+
+### Connected accounts
+
+| Method | Description |
+|--------|-------------|
+| `connected_accounts.list(...)` | List connected Google/Facebook accounts |
+| `connected_accounts.details(connected_account_id)` | Account details |
+| `connected_accounts.folders(connected_account_id, folder_name)` | Folders/location groups in the account |
+| `connected_accounts.suggestions(...)` | Suggested listing-to-location matches |
+| `connected_accounts.listings(...)` | Listings available in a connected account |
+| `connected_accounts.connect_google(success_url, error_url)` | Start Google OAuth connect |
+| `connected_accounts.connect_facebook(success_url, error_url)` | Start Facebook OAuth connect |
+| `connected_accounts.disconnect_google(connected_account_id)` | Disconnect a Google account |
+| `connected_accounts.disconnect_facebook(connected_account_id)` | Disconnect a Facebook account |
+| `connected_accounts.trigger_matches(connected_account_ids)` | Trigger profile-to-location matching |
+| `connected_accounts.confirm_matches(match_record_ids)` | Confirm suggested matches |
+| `connected_accounts.oauth_url(location_id, site, success_url, error_url)` | OAuth connect URL for one location |
+| `connected_accounts.oauth_disconnect(location_id, site)` | Disconnect one location's profile |
+
+### Workflows
+
+| Method | Description |
+|--------|-------------|
+| `workflows.auto_reply_to_reviews(location_id, template, min_rating, dry_run)` | Auto-reply to unanswered positive reviews |
+| `workflows.weekly_reputation_report(location_id)` | Reviews + analytics + listings health in one report |
+| `workflows.listings_health_audit(location_id)` | Sync status and duplicate audit with health score |
 
 ## Error handling
 
