@@ -225,7 +225,7 @@ class Locations(APIResource):
         folder_ids: list[str] | None = None,
         service_area: dict[str, Any] | None = None,
         place_action_links: list[dict[str, Any]] | None = None,
-        custom_plan_id: str | None = None,
+        enabled_site_ids: list[int] | None = None,
         additional_fields: dict[str, Any] | None = None,
     ) -> APIObject:
         """Create a location in one call with every mandatory field as a keyword argument.
@@ -254,7 +254,8 @@ class Locations(APIResource):
             service_area: Service-area config: {businessType, regionCode, placeInfos}.
             place_action_links: Google action links, e.g.
                 [{"placeActionType": "APPOINTMENT", "uri": "https://...", "isPreferred": True}].
-            custom_plan_id: Base64 custom-plan ID to publish to a subset of sites.
+            enabled_site_ids: Site IDs to publish this location to, when you want a
+                subset of your plan's sites (see the plan-sites endpoint for IDs).
             additional_fields: Extra camelCase fields merged into the payload as-is.
 
         Returns:
@@ -313,7 +314,7 @@ class Locations(APIResource):
             "folderIds": folder_ids,
             "serviceArea": service_area,
             "placeActionLinks": place_action_links,
-            "customPlanId": custom_plan_id,
+            "enabledSiteIds": enabled_site_ids,
         }
         input.update({k: v for k, v in optional.items() if v is not None})
         if additional_fields:

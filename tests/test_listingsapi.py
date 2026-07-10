@@ -483,6 +483,7 @@ def test_locations_add_posts_full_payload(client):
             place_action_links=[
                 {"placeActionType": "APPOINTMENT", "uri": "https://book.example.com", "isPreferred": True}
             ],
+            enabled_site_ids=[4, 5, 6],
         )
         assert result.success is True
         sent = m.last_request.json()["input"]
@@ -493,6 +494,7 @@ def test_locations_add_posts_full_payload(client):
         assert sent["city"] == "New York"
         assert sent["postalCode"] == "10013"
         assert sent["placeActionLinks"][0]["placeActionType"] == "APPOINTMENT"
+        assert sent["enabledSiteIds"] == [4, 5, 6]
         assert "storeId" not in sent
         assert "hideAddress" not in sent
 
