@@ -97,6 +97,7 @@ def test_client_custom_base_url():
 def test_client_has_resources(client):
     assert hasattr(client, "locations")
     assert hasattr(client, "reviews")
+    assert hasattr(client, "posts")
     assert hasattr(client, "listings")
     assert hasattr(client, "analytics")
     assert hasattr(client, "connected_accounts")
@@ -579,3 +580,194 @@ def test_subcategories(client):
         m.get("https://listingsapi.com/api/v4/sub-categories", json=response)
         subs = client.subcategories()
         assert subs[0].databaseId == 639
+
+
+# --- Posts ---
+
+CREATE_POST_OK = {
+    "data": {
+        "createSocialPost": {
+            "success": True,
+            "errors": [],
+            "socialPost": {"id": "U29jaWFsUG9zdDo0NDEyMg==", "status": "INPROGRESS"},
+        }
+    }
+}
+BULK_POST_OK = {
+    "data": {
+        "createBulkSocialPost": {
+            "success": True,
+            "errors": [],
+            "socialPost": {"id": "QnVsa1Bvc3Q6OTk=", "status": "INPROGRESS"},
+        }
+    }
+}
+
+
+def test_posts_create_announcement_builds_flat_body(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/posts", json=CREATE_POST_OK)
+        result = client.posts.create_announcement(
+            name="Grand Opening",
+            location_ids=[1800289],
+            message="We are now open!",
+            sites=["GOOGLE"],
+            cta_type="LEARN_MORE",
+            cta_url="https://example.com/opening",
+            media_url="https://cdn.example.com/opening.jpg",
+        )
+        assert result.success is True
+        sent = m.last_request.json()
+        assert "input" not in sent
+        assert sent["postName"] == "Grand Opening"
+        assert sent["postType"] == "ANNOUNCEMENT"
+        assert sent["postSites"] == ["GOOGLE"]
+        assert sent["locationIds"] == ["TG9jYXRpb246MTgwMDI4OQ=="]
+        assert sent["postMessage"] == [{"site": "GOOGLE", "message": "We are now open!"}]
+        assert sent["postCta"] == [{"site": "GOOGLE", "type": "LEARN_MORE", "url": "https://example.com/opening"}]
+        assert sent["postMediaUrl"] == [{"site": "GOOGLE", "url": "https://cdn.example.com/opening.jpg", "type": "IMAGE"}]
+
+
+def test_posts_bulk_publish_defaults_to_google_and_facebook(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/bulk-posts", json=BULK_POST_OK)
+        result = client.posts.bulk_publish(
+            name="Holiday hours",
+            location_ids=[16808, "TG9jYXRpb246MTY4MDk="],
+            message="Open late through the holidays!",
+        )
+        assert result.success is True
+        sent = m.last_request.json()
+        assert sent["postSites"] == ["GOOGLE", "FACEBOOK"]
+        assert len(sent["postMessage"]) == 2
+        assert {e["site"] for e in sent["postMessage"]} == {"GOOGLE", "FACEBOOK"}
+        assert sent["locationIds"][1] == "TG9jYXRpb246MTY4MDk="
+
+
+def test_posts_bulk_publish_per_site_messages(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/bulk-posts", json=BULK_POST_OK)
+        client.posts.bulk_publish(
+            name="Summer menu",
+            location_ids=[16808],
+            message={"GOOGLE": "New summer menu!", "FACEBOOK": "Swing by for the summer menu."},
+        )
+        sent = m.last_request.json()
+        by_site = {e["site"]: e["message"] for e in sent["postMessage"]}
+        assert by_site["GOOGLE"] == "New summer menu!"
+        assert by_site["FACEBOOK"] == "Swing by for the summer menu."
+
+
+def test_posts_bulk_publish_validates_before_http(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/bulk-posts", json=BULK_POST_OK)
+        with pytest.raises(ValidationError) as exc:
+            client.posts.bulk_publish(name="x", location_ids=[], message="", sites=["TWITTER"])
+        assert m.call_count == 0
+        msg = str(exc.value)
+        assert "location_ids" in msg and "sites" in msg and "message" in msg
+
+
+def test_posts_bulk_publish_missing_per_site_message_fails(client):
+    with pytest.raises(ValidationError) as exc:
+        client.posts.bulk_publish(
+            name="x", location_ids=[1], message={"GOOGLE": "hi"},
+        )
+    assert "FACEBOOK" in str(exc.value)
+
+
+def test_posts_cta_requires_both_fields(client):
+    with pytest.raises(ValidationError):
+        client.posts.bulk_publish(
+            name="x", location_ids=[1], message="hi", cta_type="LEARN_MORE",
+        )
+
+
+def test_posts_create_event_requires_title(client):
+    with pytest.raises(ValidationError):
+        client.posts.create_event(
+            name="x", location_ids=[1], message="hi",
+            title="", start_day="2026-08-01", end_day="2026-08-02",
+        )
+
+
+def test_posts_create_event_context(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/posts", json=CREATE_POST_OK)
+        client.posts.create_event(
+            name="Live music",
+            location_ids=[16808],
+            message="Join us Friday!",
+            title="Jazz Night",
+            start_day="2026-08-01",
+            end_day="2026-08-01",
+            start_time="7:00pm",
+            end_time="10:00pm",
+        )
+        sent = m.last_request.json()
+        assert sent["postType"] == "EVENT"
+        assert sent["postContextInfo"] == {
+            "title": "Jazz Night", "startDay": "2026-08-01", "endDay": "2026-08-01",
+            "startTime": "7:00pm", "endTime": "10:00pm",
+        }
+
+
+def test_posts_create_offer_context(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/posts", json=CREATE_POST_OK)
+        client.posts.create_offer(
+            name="Summer sale",
+            location_ids=[16808],
+            message="20% off all week!",
+            title="Summer Sale",
+            coupon_code="SUMMER20",
+            discount="20%",
+            redeem_url="https://example.com/sale",
+            start_day="2026-08-01",
+            end_day="2026-08-07",
+        )
+        sent = m.last_request.json()
+        assert sent["postType"] == "OFFER"
+        assert sent["postContextInfo"]["couponCode"] == "SUMMER20"
+        assert sent["postContextInfo"]["title"] == "Summer Sale"
+
+
+def test_posts_retrieve_and_bulk_retrieve(client):
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/posts/U29jaWFsUG9zdDo0NDEyMg==",
+              json={"data": {"socialPostView": {"socialPostId": "U29jaWFsUG9zdDo0NDEyMg=="}}})
+        post = client.posts.retrieve("U29jaWFsUG9zdDo0NDEyMg==")
+        assert post.socialPostId == "U29jaWFsUG9zdDo0NDEyMg=="
+
+        m.get("https://listingsapi.com/api/v4/bulk-posts/QnVsa1Bvc3Q6OTk=",
+              json={"data": {"socialPostViewBulk": {"socialPostId": "QnVsa1Bvc3Q6OTk="}}})
+        bulk = client.posts.bulk_retrieve("QnVsa1Bvc3Q6OTk=")
+        assert bulk.socialPostId == "QnVsa1Bvc3Q6OTk="
+
+
+def test_posts_list_for_location_defaults_tag_all(client):
+    response = {"data": {"rollupSocialPosts": {"records": [{"id": "p1"}], "pageInfo": {"totalPages": 1, "totalRecords": 1, "hasNextPage": False}}}}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations/TG9jYXRpb246MTY4MDg=/posts", json=response)
+        result = client.posts.list_for_location(16808, page=1, per_page=10)
+        assert result.records[0].id == "p1"
+        assert result.pageInfo.totalRecords == 1
+        assert m.last_request.qs["tag"] == ["all"]
+        assert m.last_request.qs["page"] == ["1"]
+
+
+def test_posts_delete(client):
+    with requests_mock.Mocker() as m:
+        m.delete("https://listingsapi.com/api/v4/posts/U29jaWFsUG9zdDo0NDEyMg==",
+                 json={"data": {"deleteSocialPost": {"success": True, "socialPostId": "U29jaWFsUG9zdDo0NDEyMg=="}}})
+        result = client.posts.delete("U29jaWFsUG9zdDo0NDEyMg==")
+        assert result.success is True
+
+
+def test_posts_bulk_publish_api_failure_raises(client):
+    body = {"data": {"createBulkSocialPost": {"success": False, "errors": [{"code": "SY20001", "message": "Image URL unreachable"}]}}}
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/bulk-posts", json=body)
+        with pytest.raises(ValidationError) as exc:
+            client.posts.bulk_publish(name="x", location_ids=[1], message="hi")
+        assert exc.value.code == "SY20001"

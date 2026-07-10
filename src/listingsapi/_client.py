@@ -96,12 +96,14 @@ class ListingsAPI:
             Listings,
             Locations,
             Photos,
+            Posts,
             Reviews,
             Workflows,
         )
 
         self.locations = Locations(self)
         self.reviews = Reviews(self)
+        self.posts = Posts(self)
         self.listings = Listings(self)
         self.analytics = Analytics(self)
         self.connected_accounts = ConnectedAccounts(self)
@@ -126,6 +128,19 @@ class ListingsAPI:
         logger.debug("POST %s", url)
         try:
             response = self._session.post(url, json=json_body, timeout=self._timeout)
+        except requests.ConnectionError as e:
+            raise APIConnectionError(f"Connection error: {e}") from e
+        except requests.Timeout as e:
+            raise APIConnectionError(f"Request timed out: {e}") from e
+        data = self._handle_response(response)
+        self._raise_for_mutation_errors(data, response)
+        return data
+
+    def _delete(self, path: str, json_body: dict[str, Any] | None = None) -> dict[str, Any]:
+        url = f"{self._base_url}/api/v4/{path}"
+        logger.debug("DELETE %s", url)
+        try:
+            response = self._session.delete(url, json=json_body, timeout=self._timeout)
         except requests.ConnectionError as e:
             raise APIConnectionError(f"Connection error: {e}") from e
         except requests.Timeout as e:

@@ -25,6 +25,7 @@ Full API reference and guides: [docs.listingsapi.com](https://docs.listingsapi.c
 - [Pagination](#pagination)
 - [Locations](#locations)
 - [Reviews](#reviews)
+- [Posts](#posts)
 - [Listings](#listings)
 - [Analytics](#analytics)
 - [Photos](#photos)
@@ -165,6 +166,77 @@ timeline = client.reviews.analytics.timeline(16808)
 sites = client.reviews.analytics.sites_stats(16808)
 phrases = client.reviews.phrases(["TG9jYXRpb246MTY4MDg="], start_date="2024-01-01")
 ```
+
+## Posts
+
+Publish announcements, events, and offers to Google and Facebook.
+
+`posts.bulk_publish()` is the one-call way to put the same post on both sites across many locations. It expands your message per site, encodes location IDs, and validates the payload client-side before any network call:
+
+```python
+result = client.posts.bulk_publish(
+    name="Holiday hours",
+    location_ids=[16808, 16809, 16810],
+    message="Open until 10pm through the holidays!",
+    media_url="https://cdn.example.com/holiday.jpg",
+    cta_type="LEARN_MORE",
+    cta_url="https://example.com/holiday-hours",
+)
+print(result.socialPost.id, result.socialPost.status)  # INPROGRESS, publishes async
+```
+
+Pass a dict as `message` for per-site copy: `{"GOOGLE": "...", "FACEBOOK": "..."}`. `sites` defaults to both.
+
+Typed creates for single campaigns:
+
+```python
+# Announcement: plain message, optional CTA and image
+result = client.posts.create_announcement(
+    name="Grand Opening",
+    location_ids=[16808],
+    message="We are now open!",
+    sites=["GOOGLE"],
+    cta_type="LEARN_MORE",
+    cta_url="https://example.com/opening",
+)
+
+# Event: title plus start/end window
+result = client.posts.create_event(
+    name="Live music",
+    location_ids=[16808],
+    message="Join us Friday!",
+    title="Jazz Night",
+    start_day="2026-08-01",
+    end_day="2026-08-01",
+    start_time="7:00pm",
+    end_time="10:00pm",
+)
+
+# Offer: coupon, discount, terms
+result = client.posts.create_offer(
+    name="Summer sale",
+    location_ids=[16808],
+    message="20% off all week!",
+    title="Summer Sale",
+    coupon_code="SUMMER20",
+    discount="20%",
+    redeem_url="https://example.com/sale",
+    start_day="2026-08-01",
+    end_day="2026-08-07",
+)
+```
+
+Read, monitor, and delete:
+
+```python
+post = client.posts.retrieve("U29jaWFsUG9zdDo0NDEyMg==")   # per-site publish status + analytics
+page = client.posts.list_for_location(16808, page=1, per_page=10)
+bulk = client.posts.bulk_retrieve("QnVsa1Bvc3Q6OTk=")        # per-location publish status
+campaigns = client.posts.bulk_list_for_location(16808)
+client.posts.delete("U29jaWFsUG9zdDo0NDEyMg==")
+```
+
+Publishing is asynchronous: creates return `status: INPROGRESS`; poll `retrieve()` until `SUCCESS` and check `publishDetails[].submissionError` for per-site failures.
 
 ## Listings
 

@@ -19,6 +19,7 @@ export LISTINGSAPI_KEY="your_api_key"
 | 08 | `08_google_connect_flow.py` | Connect Google Business Profiles via OAuth |
 | 11 | `11_fastapi_backend.py` | Wire the SDK into a FastAPI backend |
 | 12 | `12_error_handling.py` | Catch, inspect, and retry API errors |
+| 13 | `13_bulk_posting.py` | Publish one post to Google and Facebook across locations |
 
 ## Workflow Examples
 
