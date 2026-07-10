@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synup SDK — Full-stack Sample</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080A19;
+      --bg-card: #0f1221;
+      --bg-elevated: #161b2e;
+      --accent: #0085FF;
+      --green: #2cb735;
+      --yellow: #e5c07b;
+      --red: #e06c75;
+      --text: #e1e4eb;
+      --text-muted: #8b92a5;
+      --border: rgba(255,255,255,0.08);
+      --radius: 10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Nav ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 50;
+    }
+    .logo { font-size: 1rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--accent); }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { color: var(--text); background: var(--bg-elevated); }
+    .nav-tab.active { color: var(--accent); background: rgba(0,133,255,0.1); }
+
+    /* ── Container ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+
+    /* ── Page sections ── */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+
+    /* ── Cards / Grid ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(0,133,255,0.1); }
+    .card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+    .card .sub { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; }
+    .card .meta { display: flex; gap: 8px; font-size: 0.7rem; flex-wrap: wrap; }
+    .tag { background: var(--bg-elevated); padding: 2px 8px; border-radius: 4px; color: var(--text-muted); }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #0070dd; }
+    .btn-secondary { background: var(--bg-elevated); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); }
+    .btn-danger { background: rgba(224,108,117,0.15); color: var(--red); border: 1px solid rgba(224,108,117,0.2); }
+    .btn-danger:hover { background: rgba(224,108,117,0.25); }
+    .btn-sm { padding: 4px 10px; font-size: 0.72rem; }
+    .btn-group { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+    /* ── Search bar ── */
+    .search-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .search-row input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+      color: var(--text);
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .search-row input:focus { border-color: var(--accent); }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th {
+      text-align: left; color: var(--text-muted); font-weight: 500;
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .badge-synced { background: rgba(44,183,53,0.15); color: var(--green); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-warn { background: rgba(229,192,123,0.15); color: var(--yellow); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .badge-error { background: rgba(224,108,117,0.15); color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    a.link { color: var(--accent); text-decoration: none; font-size: 0.75rem; }
+    a.link:hover { text-decoration: underline; }
+
+    /* ── Detail panel (slide-out) ── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 100; }
+    .overlay.active { display: block; }
+    .panel {
+      position: fixed; top: 0; right: 0; width: 580px; max-width: 92vw; height: 100vh;
+      background: var(--bg); border-left: 1px solid var(--border);
+      overflow-y: auto; z-index: 101; transform: translateX(100%);
+      transition: transform 0.25s ease; padding: 24px;
+    }
+    .overlay.active .panel { transform: translateX(0); }
+    .panel .close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; }
+    .panel h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; padding-right: 32px; }
+    .panel .panel-sub { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .tab-bar button {
+      background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-muted); padding: 8px 14px; font-size: 0.78rem; font-weight: 500; cursor: pointer;
+    }
+    .tab-bar button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Review card ── */
+    .review-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; margin-bottom: 10px;
+    }
+    .review-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.8rem; }
+    .review-author { font-weight: 600; }
+    .review-rating { color: var(--yellow); }
+    .review-body { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px; }
+    .review-actions { display: flex; gap: 8px; align-items: center; }
+    .review-actions input {
+      flex: 1; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 4px; padding: 6px 10px; color: var(--text); font-size: 0.75rem; outline: none;
+    }
+    .review-actions input:focus { border-color: var(--accent); }
+
+    /* ── Form (modal) ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 200; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 28px; width: 480px; max-width: 90vw; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500; }
+    .form-group input, .form-group select {
+      width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 0.82rem; outline: none;
+    }
+    .form-group input:focus { border-color: var(--accent); }
+    .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+    /* ── Stats row ── */
+    .stats-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 20px; flex: 1; min-width: 140px;
+    }
+    .stat-box .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-box .val { font-size: 1.4rem; font-weight: 700; margin-top: 2px; }
+
+    /* ── Info boxes ── */
+    .info-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; margin-bottom: 10px;
+    }
+    .info-card .info-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .info-card .info-val { font-size: 0.85rem; font-weight: 500; }
+
+    /* ── Loading ── */
+    .loading, .empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.82rem; }
+    .spinner { width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; background: var(--bg-elevated);
+      border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px;
+      font-size: 0.8rem; z-index: 300; display: none;
+    }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error { border-color: var(--red); color: var(--red); }
+    .toast.active { display: block; }
+
+    /* ── Section heading ── */
+    .section-heading { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin: 20px 0 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <a class="logo" href="#">Local Dashboard</a>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('home')">Home</button>
+      <button class="nav-tab" onclick="showPage('analytics')">Analytics</button>
+      <button class="nav-tab" onclick="showPage('gridrank')">Grid Rank</button>
+      <button class="nav-tab" onclick="showPage('campaigns')">Campaigns</button>
+      <button class="nav-tab" onclick="showPage('google')">Google Connect</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- ═══════════ HOME PAGE ═══════════ -->
+    <div class="page active" id="page-home">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h1 class="page-title" style="margin:0">Locations</h1>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Location</button>
+      </div>
+
+      <div class="search-row">
+        <input type="text" id="locSearch" placeholder="Search locations...">
+        <button class="btn btn-primary" onclick="searchLocations()">Search</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="label">Loaded</div><div class="val" id="statCount">—</div></div>
+        <div class="stat-box"><div class="label">Has more</div><div class="val" id="statMore">—</div></div>
+      </div>
+
+      <div class="card-grid" id="locGrid">
+        <div class="loading"><div class="spinner"></div>Loading locations...</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ANALYTICS PAGE ═══════════ -->
+    <div class="page" id="page-analytics">
+      <h1 class="page-title">Analytics</h1>
+      <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">Select a location from Home to view analytics, or enter a location ID below.</p>
+      <div class="search-row">
+        <input type="text" id="analyticsLocId" placeholder="Location ID (e.g. 16808)">
+        <button class="btn btn-primary" onclick="loadAnalytics()">Load Analytics</button>
+      </div>
+      <div id="analyticsContent"><div class="empty">Enter a location ID to get started.</div></div>
+    </div>
+
+    <!-- ═══════════ GRID RANK PAGE ═══════════ -->
+    <div class="page" id="page-gridrank">
+      <h1 class="page-title">Grid Rank Reports</h1>
+      <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">View grid rank reports for a location.</p>
+      <div class="search-row">
+        <input type="text" id="gridrankLocId" placeholder="Location ID (e.g. 16808)">
+        <button class="btn btn-primary" onclick="loadGridReports()">Load Reports</button>
+      </div>
+      <div id="gridrankContent"><div class="empty">Enter a location ID to get started.</div></div>
+    </div>
+
+    <!-- ═══════════ CAMPAIGNS PAGE ═══════════ -->
+    <div class="page" id="page-campaigns">
+      <h1 class="page-title">Review Campaigns</h1>
+      <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:16px">View review campaigns for a location.</p>
+      <div class="search-row">
+        <input type="text" id="campaignsLocId" placeholder="Location ID (e.g. 16808)">
+        <button class="btn btn-primary" onclick="loadCampaigns()">Load Campaigns</button>
+      </div>
+      <div id="campaignsContent"><div class="empty">Enter a location ID to get started.</div></div>
+    </div>
+
+    <!-- ═══════════ GOOGLE CONNECT PAGE ═══════════ -->
+    <div class="page" id="page-google">
+      <h1 class="page-title">Google Connect</h1>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="startGoogleConnect()">Connect Google Account</button>
+        <button class="btn btn-secondary" onclick="loadConnectedAccounts()">View Connected Accounts</button>
+      </div>
+      <div id="googleContent"><div class="empty">Connect a Google account or view existing connections.</div></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ LOCATION DETAIL PANEL ═══════════ -->
+  <div class="overlay" id="detailOverlay" onclick="closePanel(event)">
+    <div class="panel" onclick="event.stopPropagation()">
+      <button class="close" onclick="closePanel()">&times;</button>
+      <h2 id="panelName">—</h2>
+      <div class="panel-sub" id="panelAddress">—</div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary btn-sm" onclick="openEditModal()">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="archiveCurrentLocation()">Archive</button>
+      </div>
+
+      <div class="tab-bar" id="panelTabs">
+        <button class="active" onclick="switchPanelTab('listings', this)">Listings</button>
+        <button onclick="switchPanelTab('reviews', this)">Reviews</button>
+        <button onclick="switchPanelTab('panelAnalytics', this)">Analytics</button>
+      </div>
+
+      <div class="tab-pane active" id="tab-listings">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="tab-pane" id="tab-reviews">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="tab-pane" id="tab-panelAnalytics">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ADD/EDIT LOCATION MODAL ═══════════ -->
+  <div class="modal-overlay" id="locModal">
+    <div class="modal-box">
+      <h3 id="locModalTitle">Add Location</h3>
+      <div class="form-group"><label>Name *</label><input id="fName"></div>
+      <div class="form-group"><label>Store ID</label><input id="fStoreId"></div>
+      <div class="form-group"><label>Street</label><input id="fStreet"></div>
+      <div class="form-group"><label>City</label><input id="fCity"></div>
+      <div class="form-group"><label>State (ISO)</label><input id="fState" placeholder="e.g. CA"></div>
+      <div class="form-group"><label>Postal Code</label><input id="fPostal"></div>
+      <div class="form-group"><label>Country (ISO)</label><input id="fCountry" placeholder="e.g. US" value="US"></div>
+      <div class="form-group"><label>Phone</label><input id="fPhone"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="locModalSubmit" onclick="submitLocationForm()">Create</button>
+        <button class="btn btn-secondary" onclick="closeLocModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let currentLoc = null;
+let editMode = false;
+
+// ── Helpers ──
+function esc(str) { const d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
+
+function decodeLocId(id) {
+  try {
+    const decoded = atob(String(id));
+    if (decoded.startsWith("Location:")) return decoded.split(":")[1];
+  } catch {}
+  return String(id);
+}
+
+function toast(msg, type = "success") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `toast ${type} active`;
+  setTimeout(() => el.classList.remove("active"), 3000);
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || res.statusText);
+  return data;
+}
+
+// ── Navigation ──
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(`page-${name}`).classList.add("active");
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  event.target.classList.add("active");
+}
+
+// ── Locations ──
+async function loadLocations(query) {
+  const grid = document.getElementById("locGrid");
+  grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  const url = query ? `/api/locations?q=${encodeURIComponent(query)}&first=10` : "/api/locations?first=10";
+  try {
+    const data = await api(url);
+    const locs = data.locations || [];
+    const pi = data.page_info || {};
+    document.getElementById("statCount").textContent = locs.length;
+    document.getElementById("statMore").textContent = pi.has_next_page ? "Yes" : "No";
+    if (!locs.length) { grid.innerHTML = '<div class="empty">No locations found.</div>'; return; }
+    grid.innerHTML = "";
+    locs.forEach(loc => {
+      const addr = [loc.street, loc.city, loc.stateIso, loc.postalCode].filter(Boolean).join(", ");
+      const card = document.createElement("div");
+      card.className = "card";
+      card.onclick = () => openDetail(loc);
+      card.innerHTML = `
+        <h3>${esc(loc.name || "Unnamed")}</h3>
+        <div class="sub">${esc(addr || "No address")}</div>
+        <div class="meta">
+          ${loc.storeId ? `<span class="tag">Store: ${esc(loc.storeId)}</span>` : ""}
+          ${loc.phone ? `<span class="tag">${esc(loc.phone)}</span>` : ""}
+          <span class="tag">ID: ${esc(decodeLocId(loc.id))}</span>
+        </div>`;
+      grid.appendChild(card);
+    });
+  } catch (err) { grid.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+function searchLocations() {
+  const q = document.getElementById("locSearch").value.trim();
+  loadLocations(q || null);
+}
+document.addEventListener("DOMContentLoaded", () => {
+  loadLocations();
+  document.getElementById("locSearch").addEventListener("keydown", e => { if (e.key === "Enter") searchLocations(); });
+});
+
+// ── Detail Panel ──
+async function openDetail(loc) {
+  currentLoc = loc;
+  document.getElementById("detailOverlay").classList.add("active");
+  document.getElementById("panelName").textContent = loc.name || "Unnamed";
+  const addr = [loc.street, loc.city, loc.stateIso, loc.postalCode].filter(Boolean).join(", ");
+  document.getElementById("panelAddress").textContent = addr;
+  // Reset to listings tab
+  switchPanelTab("listings", document.querySelector("#panelTabs button"));
+  loadListings(loc.id);
+  loadReviews(loc.id);
+  loadPanelAnalytics(loc.id);
+}
+
+function closePanel(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById("detailOverlay").classList.remove("active");
+}
+
+function switchPanelTab(name, btn) {
+  document.querySelectorAll(".tab-pane").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll("#panelTabs button").forEach(b => b.classList.remove("active"));
+  document.getElementById(`tab-${name}`).classList.add("active");
+  if (btn) btn.classList.add("active");
+}
+
+// ── Listings ──
+async function loadListings(locId) {
+  const el = document.getElementById("tab-listings");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const data = await api(`/api/locations/${locId}/listings`);
+    let html = "";
+    if ((data.premium || []).length) html += listingTable("Premium Listings", data.premium);
+    if ((data.voice || []).length) html += listingTable("Voice Listings", data.voice);
+    if ((data.additional || []).length) html += listingTable("Additional Listings", data.additional);
+    el.innerHTML = html || '<div class="empty">No listings found.</div>';
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+function listingTable(title, listings) {
+  const rows = listings.map(l => {
+    const status = (l.syncStatus || "").toUpperCase();
+    const name = (l.site && l.site.name) || l.name || l.siteName || "—";
+    let badge;
+    if (status === "SYNCED") badge = '<span class="badge-synced">Synced</span>';
+    else if (status === "IN_PROGRESS") badge = '<span class="badge-warn">In Progress</span>';
+    else badge = `<span class="badge-error">${esc(status || "Unknown")}</span>`;
+    const linkUrl = l.listingUrl || (l.site && l.site.url) || "";
+    const linkCell = linkUrl ? `<a class="link" href="${esc(linkUrl)}" target="_blank">View</a>` : "—";
+    return `<tr><td>${esc(name)}</td><td>${badge}</td><td>${linkCell}</td></tr>`;
+  }).join("");
+  return `
+    <div class="section-heading">${title} (${listings.length})</div>
+    <table><thead><tr><th>Site</th><th>Status</th><th>Link</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ── Reviews ──
+async function loadReviews(locId) {
+  const el = document.getElementById("tab-reviews");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const data = await api(`/api/locations/${locId}/reviews?first=10`);
+    const reviews = data.interactions || [];
+    if (!reviews.length) { el.innerHTML = '<div class="empty">No reviews found.</div>'; return; }
+    el.innerHTML = reviews.map(r => {
+      const stars = "\u2605".repeat(r.rating || 0) + "\u2606".repeat(5 - (r.rating || 0));
+      const hasResponse = r.responses && r.responses.length > 0;
+      const respondSection = hasResponse
+        ? `<div style="font-size:0.72rem;color:var(--green);margin-top:4px">Already responded</div>`
+        : `<div class="review-actions">
+            <input id="reply-${r.interactionId}" placeholder="Type a reply...">
+            <button class="btn btn-primary btn-sm" onclick="respondReview('${r.interactionId}')">Send</button>
+          </div>`;
+      return `
+        <div class="review-card">
+          <div class="review-header">
+            <span class="review-author">${esc(r.authorName || "Anonymous")}</span>
+            <span class="review-rating">${stars}</span>
+          </div>
+          <div class="review-body">${esc(r.content || r.comment || "No comment")}</div>
+          ${respondSection}
+        </div>`;
+    }).join("");
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+async function respondReview(interactionId) {
+  const input = document.getElementById(`reply-${interactionId}`);
+  const content = input.value.trim();
+  if (!content) return;
+  try {
+    await api(`/api/reviews/${interactionId}/respond`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    toast("Reply sent!");
+    if (currentLoc) loadReviews(currentLoc.id);
+  } catch (err) { toast("Error: " + err.message, "error"); }
+}
+
+// ── Panel Analytics ──
+async function loadPanelAnalytics(locId) {
+  const el = document.getElementById("tab-panelAnalytics");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const [google, reviews] = await Promise.all([
+      api(`/api/locations/${locId}/analytics/google`).catch(() => null),
+      api(`/api/locations/${locId}/analytics/reviews`).catch(() => null),
+    ]);
+    let html = "";
+    if (google && google.data) {
+      const g = google.data;
+      html += `<div class="section-heading">Google Analytics</div>`;
+      html += renderAnalyticsCards(g);
+    }
+    if (reviews && reviews.data) {
+      html += `<div class="section-heading">Review Analytics</div>`;
+      html += renderAnalyticsCards(reviews.data);
+    }
+    el.innerHTML = html || '<div class="empty">No analytics data available.</div>';
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+function renderAnalyticsCards(obj) {
+  if (!obj || typeof obj !== "object") return "";
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px">';
+  const entries = Object.entries(obj).filter(([k, v]) => typeof v === "number" || typeof v === "string");
+  entries.slice(0, 12).forEach(([k, v]) => {
+    const label = k.replace(/([A-Z])/g, " $1").replace(/_/g, " ").trim();
+    html += `<div class="info-card"><div class="info-label">${esc(label)}</div><div class="info-val">${esc(String(v))}</div></div>`;
+  });
+  html += "</div>";
+  return html;
+}
+
+// ── Add / Edit Location ──
+function openAddModal() {
+  editMode = false;
+  document.getElementById("locModalTitle").textContent = "Add Location";
+  document.getElementById("locModalSubmit").textContent = "Create";
+  ["fName","fStoreId","fStreet","fCity","fState","fPostal","fPhone"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("fCountry").value = "US";
+  document.getElementById("locModal").classList.add("active");
+}
+
+function openEditModal() {
+  if (!currentLoc) return;
+  editMode = true;
+  document.getElementById("locModalTitle").textContent = "Edit Location";
+  document.getElementById("locModalSubmit").textContent = "Update";
+  document.getElementById("fName").value = currentLoc.name || "";
+  document.getElementById("fStoreId").value = currentLoc.storeId || "";
+  document.getElementById("fStreet").value = currentLoc.street || "";
+  document.getElementById("fCity").value = currentLoc.city || "";
+  document.getElementById("fState").value = currentLoc.stateIso || "";
+  document.getElementById("fPostal").value = currentLoc.postalCode || "";
+  document.getElementById("fCountry").value = currentLoc.countryIso || "US";
+  document.getElementById("fPhone").value = currentLoc.phone || "";
+  document.getElementById("locModal").classList.add("active");
+}
+
+function closeLocModal() {
+  document.getElementById("locModal").classList.remove("active");
+}
+
+async function submitLocationForm() {
+  const input = {
+    name: document.getElementById("fName").value.trim(),
+    storeId: document.getElementById("fStoreId").value.trim(),
+    street: document.getElementById("fStreet").value.trim(),
+    city: document.getElementById("fCity").value.trim(),
+    stateIso: document.getElementById("fState").value.trim(),
+    postalCode: document.getElementById("fPostal").value.trim(),
+    countryIso: document.getElementById("fCountry").value.trim(),
+    phone: document.getElementById("fPhone").value.trim(),
+  };
+  // Remove empty fields
+  Object.keys(input).forEach(k => { if (!input[k]) delete input[k]; });
+
+  try {
+    if (editMode && currentLoc) {
+      input.id = String(currentLoc.id);
+      await api("/api/locations", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
+      toast("Location updated!");
+    } else {
+      await api("/api/locations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
+      toast("Location created!");
+    }
+    closeLocModal();
+    closePanel();
+    loadLocations();
+  } catch (err) { toast("Error: " + err.message, "error"); }
+}
+
+async function archiveCurrentLocation() {
+  if (!currentLoc) return;
+  if (!confirm(`Archive "${currentLoc.name}"?`)) return;
+  try {
+    await api("/api/locations/archive", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify([String(currentLoc.id)]),
+    });
+    toast("Location archived!");
+    closePanel();
+    loadLocations();
+  } catch (err) { toast("Error: " + err.message, "error"); }
+}
+
+// ═══════════ ANALYTICS PAGE ═══════════
+async function loadAnalytics() {
+  const locId = document.getElementById("analyticsLocId").value.trim();
+  if (!locId) return;
+  const el = document.getElementById("analyticsContent");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading analytics...</div>';
+  try {
+    const [google, reviews] = await Promise.all([
+      api(`/api/locations/${locId}/analytics/google`).catch(() => null),
+      api(`/api/locations/${locId}/analytics/reviews`).catch(() => null),
+    ]);
+    let html = "";
+    if (google && google.data) {
+      html += `<div class="section-heading">Google Profile Analytics</div>`;
+      html += renderAnalyticsCards(google.data);
+    }
+    if (reviews && reviews.data) {
+      html += `<div class="section-heading">Review Analytics Overview</div>`;
+      html += renderAnalyticsCards(reviews.data);
+    }
+    el.innerHTML = html || '<div class="empty">No analytics data available for this location.</div>';
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+// ═══════════ GRID RANK PAGE ═══════════
+async function loadGridReports() {
+  const locId = document.getElementById("gridrankLocId").value.trim();
+  if (!locId) return;
+  const el = document.getElementById("gridrankContent");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading reports...</div>';
+  try {
+    const data = await api(`/api/locations/${locId}/grid-reports`);
+    const reports = data.data || data.reports || data || [];
+    if (Array.isArray(reports) && reports.length) {
+      el.innerHTML = `
+        <table>
+          <thead><tr><th>Keyword</th><th>Grid Size</th><th>Created</th><th>Action</th></tr></thead>
+          <tbody>${reports.map(r => `
+            <tr>
+              <td>${esc(r.keyword || r.keywords || "—")}</td>
+              <td>${esc(String(r.gridSize || "—"))}</td>
+              <td>${esc(r.createdAt || "—")}</td>
+              <td><button class="btn btn-secondary btn-sm" onclick="viewGridReport('${r.id}')">View</button></td>
+            </tr>`).join("")}
+          </tbody>
+        </table>`;
+    } else {
+      el.innerHTML = '<div class="empty">No grid rank reports found for this location.</div>';
+    }
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+async function viewGridReport(reportId) {
+  const el = document.getElementById("gridrankContent");
+  try {
+    const data = await api(`/api/grid-report/${reportId}`);
+    const points = data.gridPoints || data.data?.gridPoints || [];
+    let html = `<button class="btn btn-secondary btn-sm" onclick="loadGridReports()" style="margin-bottom:12px">&larr; Back</button>`;
+    html += `<div class="section-heading">Report: ${esc(data.keyword || reportId)}</div>`;
+    if (points.length) {
+      html += `<table><thead><tr><th>Lat</th><th>Lng</th><th>Rank</th></tr></thead><tbody>`;
+      points.forEach(p => {
+        html += `<tr><td>${p.latitude || "—"}</td><td>${p.longitude || "—"}</td><td>${p.rank || "—"}</td></tr>`;
+      });
+      html += "</tbody></table>";
+    } else {
+      html += '<div class="empty">No grid points in this report.</div>';
+    }
+    el.innerHTML = html;
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+// ═══════════ CAMPAIGNS PAGE ═══════════
+async function loadCampaigns() {
+  const locId = document.getElementById("campaignsLocId").value.trim();
+  if (!locId) return;
+  const el = document.getElementById("campaignsContent");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading campaigns...</div>';
+  try {
+    const data = await api(`/api/locations/${locId}/campaigns`);
+    const campaigns = data.reviewCampaigns || data.data || data || [];
+    if (Array.isArray(campaigns) && campaigns.length) {
+      el.innerHTML = campaigns.map(c => `
+        <div class="info-card">
+          <div class="info-label">${esc(c.name || "Campaign")}</div>
+          <div class="info-val">Status: ${esc(c.status || "—")} &middot; Sent: ${c.sentCount || 0} &middot; Responded: ${c.respondedCount || 0}</div>
+        </div>`).join("");
+    } else {
+      el.innerHTML = '<div class="empty">No review campaigns found for this location.</div>';
+    }
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+// ═══════════ GOOGLE CONNECT PAGE ═══════════
+async function startGoogleConnect() {
+  const el = document.getElementById("googleContent");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Generating connect URL...</div>';
+  try {
+    const data = await api("/api/google/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        success_url: window.location.origin + "/?google=success",
+        error_url: window.location.origin + "/?google=error",
+      }),
+    });
+    const url = data.url || data.data?.url || "";
+    if (url) {
+      el.innerHTML = `
+        <div class="info-card">
+          <div class="info-label">OAuth URL</div>
+          <div class="info-val"><a class="link" href="${esc(url)}" target="_blank">Open Google Connect flow &rarr;</a></div>
+        </div>`;
+    } else {
+      el.innerHTML = `<div class="empty">No connect URL returned. Response: ${esc(JSON.stringify(data))}</div>`;
+    }
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+
+async function loadConnectedAccounts() {
+  const el = document.getElementById("googleContent");
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Loading accounts...</div>';
+  try {
+    const data = await api("/api/connected-accounts");
+    const accounts = data.connectedAccounts || data.data?.connectedAccounts || [];
+    if (accounts.length) {
+      el.innerHTML = `
+        <table>
+          <thead><tr><th>Email</th><th>Status</th></tr></thead>
+          <tbody>${accounts.map(a => `
+            <tr>
+              <td>${esc(a.email || a.name || "—")}</td>
+              <td><span class="tag">${esc(a.status || "—")}</span></td>
+            </tr>`).join("")}
+          </tbody>
+        </table>`;
+    } else {
+      el.innerHTML = '<div class="empty">No connected Google accounts found.</div>';
+    }
+  } catch (err) { el.innerHTML = `<div class="empty">Error: ${esc(err.message)}</div>`; }
+}
+</script>
+</body>
+</html>
