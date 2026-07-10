@@ -138,60 +138,7 @@ class Locations(APIResource):
             _fetch_next=lambda cursor: self.search(query, fields=fields, first=first, after=cursor),
         )
 
-    def list_by_folder(
-        self, *, folder_id: str | None = None, folder_name: str | None = None
-    ) -> list[APIObject]:
-        """Get all locations in a folder (including subfolders)."""
-        if not folder_id and not folder_name:
-            raise ValueError("Provide either folder_id or folder_name")
-        params: dict[str, str] = {}
-        if folder_id:
-            params["folderId"] = folder_id
-        if folder_name:
-            params["folderName"] = folder_name
-        data = self._get("folder-locations", params)
-        items = data.get("data", {}).get("getLocationsForFolder") or []
-        return [APIObject(item) for item in items]
 
-    def list_by_tags(
-        self,
-        tags: list[str],
-        *,
-        archived: bool | None = None,
-        first: int | None = None,
-        after: str | None = None,
-        before: str | None = None,
-        last: int | None = None,
-    ) -> SyncPage:
-        """Get locations with any of the given tags."""
-        if not tags:
-            return SyncPage(data=[], has_more=False)
-        params: dict[str, Any] = {"tags": json.dumps(tags)}
-        if archived is not None:
-            params["archived"] = json.dumps(archived)
-        if first is not None:
-            params["first"] = first
-        if after is not None:
-            params["after"] = after
-        if before is not None:
-            params["before"] = before
-        if last is not None:
-            params["last"] = last
-
-        data = self._get("tags/locations", params)
-        result = data.get("data", {}).get("searchLocationsByTag") or {}
-        edges = result.get("edges") or []
-        page_info = result.get("pageInfo") or {}
-        items = [e["node"] for e in edges]
-        end_cursor = edges[-1]["cursor"] if edges else None
-
-        return SyncPage(
-            data=items,
-            has_more=page_info.get("hasNextPage", False),
-            end_cursor=end_cursor,
-            total=page_info.get("total"),
-            _fetch_next=lambda cursor: self.list_by_tags(tags, archived=archived, first=first, after=cursor),
-        )
 
     def create(self, input: dict[str, Any]) -> APIObject:
         """Create a new location from a raw input dict. Pass camelCase field names.
@@ -335,11 +282,6 @@ class Locations(APIResource):
         data = self._post("locations/archive", {"input": {"locationIds": encoded}})
         return APIObject(data.get("data", {}).get("archiveLocations") or {})
 
-    def activate(self, location_ids: list[str | int]) -> APIObject:
-        """Reactivate previously archived locations."""
-        encoded = [encode_location_id(lid) for lid in location_ids]
-        data = self._post("locations/activate", {"input": {"locationIds": encoded}})
-        return APIObject(data.get("data", {}).get("activateLocations") or {})
 
     def cancel_archive(
         self, location_ids: list[str | int], selection_type: str, changed_by: str
@@ -352,7 +294,3 @@ class Locations(APIResource):
         )
         return APIObject(data.get("data", {}).get("cancelLocationsArchive") or {})
 
-    def connection_info(self, location_id: str | int) -> APIObject:
-        """Get OAuth connection status (Google/Facebook) for a location."""
-        data = self._location_get(location_id, "connection_info")
-        return APIObject(data.get("data", {}).get("locationConnectionInfo") or {})

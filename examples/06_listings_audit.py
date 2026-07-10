@@ -31,9 +31,4 @@ for loc in page:
     voice = client.listings.voice(loc.id)
     print(f"  Voice: {len(voice)} listings")
 
-    # AI listing suggestions
-    ai = client.listings.ai(loc.id)
-    if ai:
-        print(f"  AI suggestions available: True")
-
     print()

@@ -26,12 +26,10 @@ Full API reference and guides: [docs.listingsapi.com](https://docs.listingsapi.c
 - [Locations](#locations)
 - [Reviews](#reviews)
 - [Listings](#listings)
-- [Analytics and keywords](#analytics-and-keywords)
-- [Organizing: folders, tags, photos](#organizing-folders-tags-photos)
-- [Users](#users)
+- [Analytics](#analytics)
+- [Photos](#photos)
 - [Connected accounts](#connected-accounts)
-- [Grid reports and automations](#grid-reports-and-automations)
-- [Account](#account)
+- [Supporting APIs](#supporting-apis)
 - [Workflows: pre-built automations](#workflows-pre-built-automations)
 - [Error handling](#error-handling)
 - [Configuration](#configuration)
@@ -126,7 +124,7 @@ result = client.locations.add(
 print(result.location.id)
 ```
 
-Optional keyword arguments: `state_iso`, `website`, `store_id`, `hide_address`, `business_hours`, `folder_ids`, `service_area`, `place_action_links`, `enabled_site_ids` (publish to a subset of your plan's sites), and `additional_fields` for anything else.
+Optional keyword arguments: `state_iso`, `website`, `store_id`, `hide_address`, `business_hours`, `folder_ids`, `service_area`, `place_action_links`, `enabled_site_ids` (publish to a subset of your plan's sites), and `additional_fields` for anything else. Get valid category IDs from `client.subcategories()`.
 
 Find and fetch:
 
@@ -136,8 +134,6 @@ page = client.locations.search("cafe", first=20)
 
 locations = client.locations.list_by_ids([16808, 16749])
 locations = client.locations.list_by_store_codes(["STORE01", "STORE02"])
-locations = client.locations.list_by_folder(folder_name="franchise")
-page = client.locations.list_by_tags(["vip", "recent"], first=20)
 ```
 
 Update and lifecycle:
@@ -145,7 +141,7 @@ Update and lifecycle:
 ```python
 client.locations.update({"id": 16808, "phone": "5559876543"})
 client.locations.archive([16808])
-client.locations.activate([16808])
+client.locations.cancel_archive([16808], "manual", "ops@example.com")
 ```
 
 `locations.create(input_dict)` is also available when you already have a raw camelCase payload.
@@ -170,25 +166,11 @@ sites = client.reviews.analytics.sites_stats(16808)
 phrases = client.reviews.phrases(["TG9jYXRpb246MTY4MDg="], start_date="2024-01-01")
 ```
 
-Review campaigns:
-
-```python
-campaigns = client.campaigns.list(16808)
-result = client.campaigns.create(
-    16808,
-    name="Holiday Feedback",
-    customers=[{"name": "John", "email": "john@example.com"}],
-    screening=False,
-)
-client.campaigns.add_customers("campaign-id", [{"name": "Jane", "email": "jane@example.com"}])
-```
-
 ## Listings
 
 ```python
 premium = client.listings.premium(16808)
 voice = client.listings.voice(16808)
-ai = client.listings.ai(16808)
 
 # Duplicates
 dupes = client.listings.duplicates(16808)
@@ -200,52 +182,22 @@ client.listings.connect(16808, "listing-id", "account-id")
 client.listings.disconnect(16808, "GOOGLE")
 ```
 
-## Analytics and keywords
+## Analytics
 
 ```python
 google = client.analytics.google(16808, from_date="2024-01-01")
 bing = client.analytics.bing(16808)
 facebook = client.analytics.facebook(16808)
-
-keywords = client.keywords.list(16808)
-performance = client.keywords.performance(16808, from_date="2024-01-01")
-created = client.keywords.add(16808, ["plumber", "plumbing near me"])
-client.keywords.archive("keyword-id")
 ```
 
-## Organizing: folders, tags, photos
+## Photos
 
 ```python
-# Folders
-folders = client.folders.list()
-tree = client.folders.tree()
-client.folders.create("franchise", parent_folder_name="all_franchise")
-client.folders.rename("Old Name", "New Name")
-client.folders.add_locations("franchise", [16808, 16749])
-client.folders.remove_locations([16808])
-client.folders.delete("folder-name")
-
-# Tags
-tags = client.tags.list()
-client.tags.add(16808, "vip")
-client.tags.remove(16808, "old-tag")
-
-# Photos
 photos = client.photos.list(16808)
 client.photos.add(16808, [{"photo": "https://example.com/img.jpg", "type": "ADDITIONAL"}])
 client.photos.remove(16808, ["photo-id"])
 client.photos.star(16808, ["media-id"], starred=True)
-```
-
-## Users
-
-```python
-users = client.users.list()
-roles = client.users.roles()
-result = client.users.create(email="jane@example.com", role_id="...", first_name="Jane")
-client.users.update("user-id", first_name="Jane Updated")
-client.users.add_locations("user-id", [16808])
-client.users.remove_locations("user-id", [16808])
+status = client.photos.upload_status("request-id")
 ```
 
 ## Connected accounts
@@ -260,41 +212,13 @@ url = client.connected_accounts.oauth_url(16808, "GOOGLE", "https://ok.com", "ht
 client.connected_accounts.oauth_disconnect(16808, "FACEBOOK")
 ```
 
-## Grid reports and automations
+## Supporting APIs
 
 ```python
-result = client.grid_reports.create(
-    location_id=16808,
-    keywords=["italian restaurant"],
-    business_name="Chianti",
-    business_street="No 12, 5th Block",
-    business_city="Bengaluru",
-    business_state="Karnataka",
-    business_country="India",
-    latitude=12.935216,
-    longitude=77.619961,
-    distance=20,
-    distance_unit="km",
-    grid_size=3,
-)
-report = client.grid_reports.retrieve("report-id")
-reports = client.grid_reports.list(16808, page_size=20, page=1)
-
-result = client.automations.temporary_close(
-    name="Holiday closure",
-    start_date="2025-12-24",
-    start_time="18:00:00",
-    end_date="2025-12-26",
-    location_id=16808,
-)
-```
-
-## Account
-
-```python
-sites = client.plan_sites()       # directories included in your plan
-countries = client.countries()    # supported countries and states
-subs = client.subscriptions()     # active subscriptions
+sites = client.plan_sites()          # directories included in your plan
+countries = client.countries()       # supported countries and states
+subcategories = client.subcategories()  # business categories (IDs for locations.add)
+subs = client.subscriptions()        # active subscriptions
 ```
 
 ## Workflows: pre-built automations
@@ -309,23 +233,6 @@ results = client.workflows.auto_reply_to_reviews(
     min_rating=4,
     dry_run=True,
 )
-
-# Onboard a location with folder, tags, and keywords in one call
-result = client.workflows.onboard_location(
-    name="Acme Coffee",
-    street="123 Main St",
-    city="New York",
-    state="NY",
-    postal_code="10001",
-    country="US",
-    phone="5551234567",
-    folder_name="NYC Stores",
-    tags=["new", "coffee"],
-    keywords=["coffee shop near me"],
-)
-
-# Bulk onboard from CSV
-results = client.workflows.bulk_onboard_locations("locations.csv", folder_name="Imported")
 
 # Weekly reputation report
 report = client.workflows.weekly_reputation_report(16808)

@@ -96,155 +96,7 @@ class Workflows(APIResource):
 
         return results
 
-    def onboard_location(
-        self,
-        name: str,
-        street: str,
-        city: str,
-        state: str,
-        postal_code: str,
-        country: str,
-        phone: str,
-        *,
-        store_id: str | None = None,
-        folder_name: str | None = None,
-        tags: list[str] | None = None,
-        keywords: list[str] | None = None,
-        **extra: Any,
-    ) -> APIObject:
-        """Onboard a new location in one call — creates it, assigns folder, tags, and keywords.
 
-        Combines: create_location + add_to_folder + add_tags + add_keywords
-
-        Args:
-            name: Business name.
-            street: Street address.
-            city: City.
-            state: State ISO code (e.g. "NY").
-            postal_code: Zip/postal code.
-            country: Country ISO code (e.g. "US").
-            phone: Phone number.
-            store_id: Optional store identifier.
-            folder_name: Optional folder to assign location to.
-            tags: Optional tags to add.
-            keywords: Optional keywords to track for rankings.
-            **extra: Additional fields passed to create_location.
-
-        Returns:
-            APIObject with created location data and onboarding status.
-
-        Example:
-            result = client.workflows.onboard_location(
-                name="Acme Coffee",
-                street="123 Main St",
-                city="New York",
-                state="NY",
-                postal_code="10001",
-                country="US",
-                phone="5551234567",
-                folder_name="NYC Stores",
-                tags=["new", "coffee"],
-                keywords=["coffee shop near me"],
-            )
-        """
-        from listingsapi.resources.folders import Folders
-        from listingsapi.resources.keywords import Keywords
-        from listingsapi.resources.locations import Locations
-        from listingsapi.resources.tags import Tags
-
-        locations = Locations(self._client)
-        input_data: dict[str, Any] = {
-            "name": name,
-            "street": street,
-            "city": city,
-            "stateIso": state,
-            "postalCode": postal_code,
-            "countryIso": country,
-            "phone": phone,
-        }
-        if store_id:
-            input_data["storeId"] = store_id
-        input_data.update(extra)
-
-        result = locations.create(input_data)
-        location_data = result.to_dict()
-        location_id = location_data.get("location", {}).get("id") or location_data.get("id")
-        status: dict[str, Any] = {"location": location_data, "folder": None, "tags": [], "keywords": []}
-
-        if location_id:
-            if folder_name:
-                folders = Folders(self._client)
-                status["folder"] = folders.add_locations(folder_name, [location_id]).to_dict()
-
-            if tags:
-                tags_resource = Tags(self._client)
-                for tag in tags:
-                    status["tags"].append(tags_resource.add(location_id, tag).to_dict())
-
-            if keywords:
-                kw_resource = Keywords(self._client)
-                status["keywords"] = [kw.to_dict() for kw in kw_resource.add(location_id, keywords)]
-
-        return APIObject(status)
-
-    def bulk_onboard_locations(
-        self,
-        csv_path: str,
-        *,
-        folder_name: str | None = None,
-        tags: list[str] | None = None,
-        dry_run: bool = False,
-    ) -> list[dict[str, Any]]:
-        """Onboard locations in bulk from a CSV file.
-
-        CSV columns: name, street, city, state, postal_code, country, phone, store_id (optional)
-
-        Args:
-            csv_path: Path to CSV file.
-            folder_name: Optional folder to assign all locations to.
-            tags: Optional tags to add to all locations.
-            dry_run: If True, validate CSV and return parsed rows without creating.
-
-        Returns:
-            List of results per row — each with location data or error.
-
-        Example:
-            results = client.workflows.bulk_onboard_locations(
-                "locations.csv",
-                folder_name="Batch Import",
-                tags=["imported"],
-            )
-            succeeded = [r for r in results if r["status"] == "created"]
-            print(f"Created {len(succeeded)} of {len(results)} locations")
-        """
-        results = []
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                entry: dict[str, Any] = {"row": row}
-                if dry_run:
-                    entry["status"] = "dry_run"
-                    results.append(entry)
-                    continue
-                try:
-                    result = self.onboard_location(
-                        name=row.get("name", ""),
-                        street=row.get("street", ""),
-                        city=row.get("city", ""),
-                        state=row.get("state", ""),
-                        postal_code=row.get("postal_code", ""),
-                        country=row.get("country", ""),
-                        phone=row.get("phone", ""),
-                        store_id=row.get("store_id"),
-                        folder_name=folder_name,
-                        tags=tags,
-                    )
-                    entry["result"] = result.to_dict()
-                    entry["status"] = "created"
-                except Exception as e:
-                    entry["status"] = f"error: {e}"
-                results.append(entry)
-        return results
 
     def weekly_reputation_report(
         self, location_id: str | int, *, start_date: str | None = None, end_date: str | None = None
@@ -317,16 +169,12 @@ class Workflows(APIResource):
             print(f"Duplicates found: {len(audit.duplicates)}")
         """
         from listingsapi.resources.listings import Listings
-        from listingsapi.resources.locations import Locations
 
         listings = Listings(self._client)
-        locations = Locations(self._client)
 
         premium = [l.to_dict() for l in listings.premium(location_id)]
         voice = [l.to_dict() for l in listings.voice(location_id)]
         dupes = [l.to_dict() for l in listings.duplicates(location_id)]
-        connection = locations.connection_info(location_id).to_dict()
-
         synced = [l for l in premium if l.get("syncStatus") == "SYNCED"]
         issues = [l for l in premium if l.get("syncStatus") not in ("SYNCED", None)]
 
@@ -337,7 +185,6 @@ class Workflows(APIResource):
             "premium": premium,
             "voice": voice,
             "duplicates": dupes,
-            "connection_status": connection,
             "synced_count": len(synced),
             "issue_count": len(issues),
             "issues": issues,

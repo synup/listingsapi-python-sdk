@@ -30,10 +30,6 @@ class Listings(APIResource):
         items = data.get("data", {}).get("voiceAssistantsForLocation") or []
         return [APIObject(item) for item in items]
 
-    def ai(self, location_id: str | int) -> APIObject:
-        """Get AI-generated listing suggestions."""
-        data = self._location_get(location_id, "ai-listings")
-        return APIObject(data.get("data", {}).get("fetchAiListings") or {})
 
     def duplicates(self, location_id: str | int) -> list[APIObject]:
         """Get duplicate listings for a location."""

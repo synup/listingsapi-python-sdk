@@ -92,18 +92,11 @@ class ListingsAPI:
         # Resources — lazy imports to avoid circular deps
         from listingsapi.resources import (
             Analytics,
-            Automations,
-            Campaigns,
             ConnectedAccounts,
-            Folders,
-            GridReports,
-            Keywords,
             Listings,
             Locations,
             Photos,
             Reviews,
-            Tags,
-            Users,
             Workflows,
         )
 
@@ -111,15 +104,8 @@ class ListingsAPI:
         self.reviews = Reviews(self)
         self.listings = Listings(self)
         self.analytics = Analytics(self)
-        self.folders = Folders(self)
-        self.users = Users(self)
-        self.keywords = Keywords(self)
-        self.campaigns = Campaigns(self)
         self.connected_accounts = ConnectedAccounts(self)
-        self.tags = Tags(self)
-        self.grid_reports = GridReports(self)
         self.photos = Photos(self)
-        self.automations = Automations(self)
         self.workflows = Workflows(self)
 
     # --- HTTP methods (used by resources) ---
@@ -209,6 +195,12 @@ class ListingsAPI:
         """Get supported directories for your plan."""
         data = self._get("plan-sites")
         items = data.get("data", {}).get("planSites") or []
+        return [APIObject(item) for item in items]
+
+    def subcategories(self) -> list[APIObject]:
+        """Get business subcategories (use the databaseId as subCategoryId when creating locations)."""
+        data = self._get("sub-categories")
+        items = data.get("data", {}).get("subcategories") or []
         return [APIObject(item) for item in items]
 
     def countries(self) -> list[APIObject]:

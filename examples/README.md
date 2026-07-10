@@ -1,9 +1,9 @@
-# Synup SDK Examples
+# listingsAPI SDK Examples
 
-Runnable scripts demonstrating common use cases with the `synup.Synup()` resource-based API. Set your API key before running:
+Runnable scripts demonstrating common use cases with the `listingsapi.ListingsAPI()` resource-based API. Set your API key before running:
 
 ```bash
-export SYNUP_API_KEY="your_api_key"
+export LISTINGSAPI_KEY="your_api_key"
 ```
 
 ## Core Examples
@@ -16,11 +16,9 @@ export SYNUP_API_KEY="your_api_key"
 | 04 | `04_bulk_respond_reviews.py` | Auto-reply to unanswered reviews with templates |
 | 05 | `05_analytics_report.py` | Pull Google and review analytics per location |
 | 06 | `06_listings_audit.py` | Audit listing sync status across locations |
-| 07 | `07_user_management.py` | Create users and manage roles and access |
 | 08 | `08_google_connect_flow.py` | Connect Google Business Profiles via OAuth |
-| 09 | `09_grid_rank_report.py` | Create Local Rank Grid reports |
-| 10 | `10_review_campaign.py` | Run review solicitation campaigns |
 | 11 | `11_fastapi_backend.py` | Wire the SDK into a FastAPI backend |
+| 12 | `12_error_handling.py` | Catch, inspect, and retry API errors |
 
 ## Workflow Examples
 
@@ -29,31 +27,15 @@ These scripts use the `client.workflows.*` helper functions that combine multipl
 | Script | Description |
 |--------|-------------|
 | `review_auto_responder.py` | Auto-reply to positive reviews (dry-run supported) |
-| `bulk_location_onboarding.py` | Import locations from a CSV file |
 | `weekly_report.py` | Generate a full reputation report for a location |
 | `listings_health_check.py` | Run a listings sync and duplicate audit |
-
-## Full-stack Sample
-
-The `fullstack/` directory contains a complete working app -- a **Locations & Listings Dashboard** with a FastAPI backend and HTML frontend.
-
-```bash
-pip install synup-sdk fastapi uvicorn
-SYNUP_API_KEY='your_key' python examples/fullstack/server.py
-# Open http://localhost:3000
-```
-
-Features:
-- Browse locations in a card grid with search
-- Click a location to see its listings (premium, voice, additional) and reviews
-- Slide-out detail panel with tabbed view
 
 ## API Quick Reference
 
 ```python
-import synup
+import listingsapi
 
-client = synup.Synup()  # reads SYNUP_API_KEY from env
+client = listingsapi.ListingsAPI()  # reads LISTINGSAPI_KEY from env
 
 # Locations
 page = client.locations.list(first=10)

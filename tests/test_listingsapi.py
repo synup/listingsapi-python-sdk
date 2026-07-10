@@ -99,15 +99,11 @@ def test_client_has_resources(client):
     assert hasattr(client, "reviews")
     assert hasattr(client, "listings")
     assert hasattr(client, "analytics")
-    assert hasattr(client, "folders")
-    assert hasattr(client, "users")
-    assert hasattr(client, "keywords")
-    assert hasattr(client, "campaigns")
     assert hasattr(client, "connected_accounts")
-    assert hasattr(client, "tags")
-    assert hasattr(client, "grid_reports")
     assert hasattr(client, "photos")
-    assert hasattr(client, "automations")
+    assert hasattr(client, "workflows")
+    for removed in ("folders", "users", "keywords", "campaigns", "tags", "grid_reports", "automations"):
+        assert not hasattr(client, removed)
 
 
 # --- APIObject ---
@@ -304,9 +300,9 @@ def test_401_raises_authentication_error(client):
 
 def test_404_raises_not_found_error(client):
     with requests_mock.Mocker() as m:
-        m.get("https://listingsapi.com/api/v4/tags", status_code=404, text="Not found")
+        m.get("https://listingsapi.com/api/v4/plan-sites", status_code=404, text="Not found")
         with pytest.raises(NotFoundError) as exc:
-            client.tags.list()
+            client.plan_sites()
         assert exc.value.status_code == 404
 
 
@@ -383,68 +379,11 @@ def test_analytics_google(client):
 
 # --- Folders resource ---
 
-def test_folders_list(client):
-    response = {"data": {"getUserFolders": [{"id": "f1", "name": "franchise"}]}}
-    with requests_mock.Mocker() as m:
-        m.get("https://listingsapi.com/api/v4/folders/flat", json=response)
-        folders = client.folders.list()
-        assert len(folders) == 1
-        assert folders[0].name == "franchise"
 
 
-def test_folders_create(client):
-    response = {"data": {"createFolder": {"success": True}}}
-    with requests_mock.Mocker() as m:
-        m.post("https://listingsapi.com/api/v4/folders/create", json=response)
-        result = client.folders.create("new-folder")
-        assert result.success is True
 
 
-# --- Tags resource ---
 
-def test_tags_list(client):
-    response = {"data": {"listAllTags": [{"id": "t1", "name": "vip"}]}}
-    with requests_mock.Mocker() as m:
-        m.get("https://listingsapi.com/api/v4/tags", json=response)
-        tags = client.tags.list()
-        assert len(tags) == 1
-        assert tags[0].name == "vip"
-
-
-# --- Users resource ---
-
-def test_users_list(client):
-    response = {"data": {"users": [{"id": "u1", "email": "jane@example.com"}]}}
-    with requests_mock.Mocker() as m:
-        m.get("https://listingsapi.com/api/v4/users", json=response)
-        users = client.users.list()
-        assert len(users) == 1
-        assert users[0].email == "jane@example.com"
-
-
-def test_users_create(client):
-    response = {"data": {"addUser": {"success": True, "user": {"id": "new"}}}}
-    with requests_mock.Mocker() as m:
-        m.post("https://listingsapi.com/api/v4/users/create", json=response)
-        result = client.users.create(email="j@example.com", role_id="role1", first_name="Jane")
-        assert result.success is True
-
-
-# --- Keywords resource ---
-
-def test_keywords_list(client):
-    response = {"data": {"keywordsByLocationId": [{"id": "k1", "name": "plumber"}]}}
-    with requests_mock.Mocker() as m:
-        m.get(
-            "https://listingsapi.com/api/v4/locations/TG9jYXRpb246MTY4MDg=/keywords",
-            json=response,
-        )
-        keywords = client.keywords.list(16808)
-        assert len(keywords) == 1
-        assert keywords[0].name == "plumber"
-
-
-# --- Version ---
 
 def test_version():
     assert listingsapi.__version__ == "0.5.0"
@@ -632,3 +571,11 @@ def test_successful_mutation_unaffected_by_envelope_check(client):
         m.post("https://listingsapi.com/api/v4/locations", json=body)
         result = client.locations.create({"name": "Acme"})
         assert result.success is True
+
+
+def test_subcategories(client):
+    response = {"data": {"subcategories": [{"databaseId": 639, "name": "Dentist"}]}}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/sub-categories", json=response)
+        subs = client.subcategories()
+        assert subs[0].databaseId == 639
