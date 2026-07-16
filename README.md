@@ -5,10 +5,6 @@
 <h1 align="center">listingsAPI Python SDK</h1>
 
 <p align="center">
-  Business listings, reviews, posts, and local-search analytics for local marketing &mdash; one typed Python client.
-</p>
-
-<p align="center">
   <a href="https://pypi.org/project/listingsapi/"><img src="https://img.shields.io/pypi/v/listingsapi?color=2C6BE0" alt="PyPI version" /></a>
   <a href="https://pypi.org/project/listingsapi/"><img src="https://img.shields.io/pypi/dm/listingsapi?color=5BB0FF" alt="PyPI downloads" /></a>
   <a href="https://pypi.org/project/listingsapi/"><img src="https://img.shields.io/badge/python-3.9%2B-2C6BE0" alt="Python 3.9+" /></a>
