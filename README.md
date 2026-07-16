@@ -533,7 +533,7 @@ client = listingsapi.ListingsAPI(
 Runnable scripts for every area live in [examples/](examples/), from a 10-line quickstart to a full FastAPI backend.
 
 ```bash
-git clone https://github.com/synup/listingsapi-python-sdk.git
+git clone https://github.com/Listings-API/listingsapi-python-sdk.git
 cd listingsapi-python-sdk
 pip install -e ".[dev]"
 pytest
