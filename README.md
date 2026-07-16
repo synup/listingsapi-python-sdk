@@ -1,8 +1,20 @@
-# listingsAPI Python SDK
+<p align="center">
+  <img src="assets/listingsapi-logo.svg" alt="listingsAPI" width="104" height="104" />
+</p>
 
-[![PyPI](https://img.shields.io/pypi/v/listingsapi)](https://pypi.org/project/listingsapi/)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://pypi.org/project/listingsapi/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+<h1 align="center">listingsAPI Python SDK</h1>
+
+<p align="center">
+  Business listings, reviews, posts, and local-search analytics for local marketing &mdash; one typed Python client.
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/listingsapi/"><img src="https://img.shields.io/pypi/v/listingsapi?color=2C6BE0" alt="PyPI version" /></a>
+  <a href="https://pypi.org/project/listingsapi/"><img src="https://img.shields.io/pypi/dm/listingsapi?color=5BB0FF" alt="PyPI downloads" /></a>
+  <a href="https://pypi.org/project/listingsapi/"><img src="https://img.shields.io/badge/python-3.9%2B-2C6BE0" alt="Python 3.9+" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT" /></a>
+  <a href="https://www.listingsapi.com"><img src="https://img.shields.io/badge/Visit-listingsapi.com-2C6BE0" alt="Website" /></a>
+</p>
 
 The official Python SDK for [listingsAPI](https://www.listingsapi.com): business listings, reviews, posts, and analytics for local marketing, in one typed client.
 
