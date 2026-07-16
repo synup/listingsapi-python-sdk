@@ -490,7 +490,7 @@ except listingsapi.APIConnectionError:
     print("Network error. Could not reach the API.")
 ```
 
-The client automatically retries 429 and 5xx responses (default 2 attempts, honoring `Retry-After`). A `RateLimitError` means retries were exhausted; back off for `e.retry_after` seconds before trying again:
+The client automatically retries **read** requests (GET) on 429 and 5xx responses — up to `max_retries` attempts (default 2), honoring `Retry-After`. Writes (creates, replies, posts, deletes) are **not** retried automatically: they are not idempotent, so a blind retry after a completed-but-5xx write could duplicate the record. If you need to retry a write, do it yourself only when the operation is safe to repeat. A `RateLimitError` means retries were exhausted; back off for `e.retry_after` seconds before trying again:
 
 ```python
 import time
@@ -526,7 +526,7 @@ client = listingsapi.ListingsAPI(
 | `api_key` | `LISTINGSAPI_KEY` env var | Your API key |
 | `base_url` | `https://listingsapi.com` | API host |
 | `timeout` | `240.0` | Request timeout in seconds |
-| `max_retries` | `2` | Automatic retries on 429 and 5xx |
+| `max_retries` | `2` | Automatic retries on 429 and 5xx for read (GET) requests; writes are never auto-retried |
 
 ## Examples and development
 

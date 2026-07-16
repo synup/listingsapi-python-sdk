@@ -20,7 +20,8 @@ class APIError(ListingsAPIError):
         status_code: HTTP status code of the response (may be 200 for
             payload-level errors).
         response_body: Raw response text from the API, when available.
-        code: The first API error code (e.g. "SY10005"), when the API sent one.
+        code: The first API error code (e.g. "SY10005"), taken from the error's
+            "code" field or parsed from a leading "SYxxxxx:" message prefix.
         errors: Parsed API error entries, each normalized to a dict with
             "code", "message", and "context" keys.
 
@@ -58,7 +59,12 @@ class APIError(ListingsAPIError):
 
 
 class AuthenticationError(APIError):
-    """401 — Invalid or missing API key."""
+    """Invalid or missing API key.
+
+    Raised for HTTP 401 and for invalid-token error payloads the platform
+    returns with HTTP 200 (codes SY90005 / SY90001, whether supplied as a
+    ``code`` field or embedded as a ``SYxxxxx:`` prefix in the message).
+    """
 
 
 class PermissionDeniedError(APIError):

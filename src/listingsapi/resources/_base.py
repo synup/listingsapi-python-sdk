@@ -17,11 +17,15 @@ class APIResource:
     def _get(self, path: str, params: dict | None = None) -> dict[str, Any]:
         return self._client._get(path, params)
 
-    def _post(self, path: str, json_body: dict[str, Any]) -> dict[str, Any]:
-        return self._client._post(path, json_body)
+    def _post(
+        self, path: str, json_body: dict[str, Any], *, idempotency_key: str | None = None
+    ) -> dict[str, Any]:
+        return self._client._post(path, json_body, idempotency_key=idempotency_key)
 
-    def _delete(self, path: str, json_body: dict[str, Any] | None = None) -> dict[str, Any]:
-        return self._client._delete(path, json_body)
+    def _delete(
+        self, path: str, json_body: dict[str, Any] | None = None, *, idempotency_key: str | None = None
+    ) -> dict[str, Any]:
+        return self._client._delete(path, json_body, idempotency_key=idempotency_key)
 
     def _location_get(
         self, location_id: str | int, path_suffix: str, params: dict | None = None

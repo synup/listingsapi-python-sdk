@@ -11,6 +11,7 @@ from listingsapi.exceptions import (
     APIConnectionError,
     APIError,
     AuthenticationError,
+    InternalServerError,
     NotFoundError,
     PermissionDeniedError,
     RateLimitError,
@@ -771,3 +772,124 @@ def test_posts_bulk_publish_api_failure_raises(client):
         with pytest.raises(ValidationError) as exc:
             client.posts.bulk_publish(name="x", location_ids=[1], message="hi")
         assert exc.value.code == "SY20001"
+
+
+# --- SYxxxxx: message-prefix error codes (H-02) ---
+
+def test_message_prefix_code_on_200_raises_authentication_error(client):
+    body = {"data": None, "errors": [{"message": "SY90005: Invalid Token"}]}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations", json=body, status_code=200)
+        with pytest.raises(AuthenticationError) as exc:
+            client.locations.list()
+        assert exc.value.code == "SY90005"
+        assert exc.value.status_code == 200
+        assert exc.value.errors[0]["message"] == "Invalid Token"
+
+
+def test_message_prefix_code_on_401_raises_authentication_error(client):
+    body = {"message": "SY90005: Invalid Token"}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations", json=body, status_code=401)
+        with pytest.raises(AuthenticationError) as exc:
+            client.locations.list()
+        assert exc.value.code == "SY90005"
+        assert exc.value.status_code == 401
+        assert exc.value.errors[0]["message"] == "Invalid Token"
+
+
+def test_message_prefix_sy90001_on_200_raises_authentication_error(client):
+    body = {"data": None, "errors": [{"message": "SY90001: Missing authentication token"}]}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations", json=body)
+        with pytest.raises(AuthenticationError) as exc:
+            client.locations.list()
+        assert exc.value.code == "SY90001"
+
+
+def test_message_prefix_code_on_401_errors_envelope(client):
+    body = {"errors": [{"message": "SY90001: Missing authentication token"}]}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations", json=body, status_code=401)
+        with pytest.raises(AuthenticationError) as exc:
+            client.locations.list()
+        assert exc.value.code == "SY90001"
+        assert exc.value.status_code == 401
+
+
+def test_message_prefix_code_not_duplicated_in_error_str(client):
+    body = {"data": None, "errors": [{"message": "SY90005: Invalid Token"}]}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations", json=body)
+        with pytest.raises(AuthenticationError) as exc:
+            client.locations.list()
+        assert str(exc.value).count("SY90005") == 1
+
+
+def test_separate_code_field_still_wins_over_prefix(client):
+    body = {"errors": [{"code": "SY90003", "message": "SY90005: mixed"}]}
+    with requests_mock.Mocker() as m:
+        m.get("https://listingsapi.com/api/v4/locations", json=body)
+        with pytest.raises(PermissionDeniedError) as exc:
+            client.locations.list()
+        assert exc.value.code == "SY90003"
+
+
+# --- Retry policy (H-01): writes are not auto-retried ---
+
+def test_post_not_retried_by_default(client):
+    adapter = client._session.get_adapter("https://listingsapi.com")
+    allowed = adapter.max_retries.allowed_methods
+    assert "POST" not in allowed
+    assert "DELETE" not in allowed
+    assert "GET" in allowed
+
+
+def test_get_retry_policy_configured(client):
+    adapter = client._session.get_adapter("https://listingsapi.com")
+    assert adapter.max_retries.total == 2
+    assert 500 in adapter.max_retries.status_forcelist
+
+
+def test_post_not_retried_without_idempotency_key(client):
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://listingsapi.com/api/v4/locations",
+            [{"status_code": 500, "text": "boom"}, {"json": {"data": {}}, "status_code": 200}],
+        )
+        with pytest.raises(InternalServerError):
+            client._post("locations", {"input": {"name": "Acme"}})
+        assert m.call_count == 1
+
+
+def test_post_retried_with_idempotency_key(client, monkeypatch):
+    monkeypatch.setattr(listingsapi._client.time, "sleep", lambda *a, **k: None)
+    ok = {"data": {"createLocation": {"success": True, "location": {"id": "x"}, "errors": []}}}
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://listingsapi.com/api/v4/locations",
+            [{"status_code": 500, "text": "boom"}, {"json": ok, "status_code": 200}],
+        )
+        data = client._post("locations", {"input": {"name": "Acme"}}, idempotency_key="idem-123")
+        assert m.call_count == 2
+        assert m.request_history[0].headers.get("Idempotency-Key") == "idem-123"
+        assert data["data"]["createLocation"]["success"] is True
+
+
+def test_post_idempotency_key_retries_are_bounded(client, monkeypatch):
+    monkeypatch.setattr(listingsapi._client.time, "sleep", lambda *a, **k: None)
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://listingsapi.com/api/v4/locations",
+            [{"status_code": 503, "text": "down"}] * 5,
+        )
+        with pytest.raises(InternalServerError):
+            client._post("locations", {"input": {"name": "Acme"}}, idempotency_key="k")
+        assert m.call_count == client._max_retries + 1
+
+
+def test_post_without_key_sends_no_idempotency_header(client):
+    with requests_mock.Mocker() as m:
+        m.post("https://listingsapi.com/api/v4/locations", json={"data": {}})
+        client._post("locations", {"input": {"name": "Acme"}})
+        assert "Idempotency-Key" not in m.last_request.headers
