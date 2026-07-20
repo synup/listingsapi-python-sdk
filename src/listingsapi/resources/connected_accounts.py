@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Any
 
 from listingsapi._types import APIObject
@@ -43,7 +44,7 @@ class ConnectedAccounts(APIResource):
         data = self._get(f"connected-accounts/{connected_account_id}/details")
         return APIObject(data.get("data", {}).get("connectedAccountDetails") or {})
 
-    def folders(self, connected_account_id: str, *, folder_name: str | None = None) -> list[APIObject]:
+    def folders(self, connected_account_id: str, *, folder_name: str | None = None) -> builtins.list[APIObject]:
         """Get folders under a connected Google account."""
         params: dict[str, str] = {}
         if folder_name is not None:
@@ -115,7 +116,7 @@ class ConnectedAccounts(APIResource):
         )
         return APIObject(data.get("data", {}).get("fbBulkDisconnect") or {})
 
-    def trigger_matches(self, connected_account_ids: list[str]) -> APIObject:
+    def trigger_matches(self, connected_account_ids: builtins.list[str]) -> APIObject:
         """Trigger matching of profiles to listingsAPI locations."""
         data = self._post(
             "connected-accounts/trigger-matches",
@@ -123,7 +124,7 @@ class ConnectedAccounts(APIResource):
         )
         return APIObject(data.get("data", {}).get("connectedAccountsTriggerMatches") or {})
 
-    def confirm_matches(self, match_record_ids: list[str]) -> APIObject:
+    def confirm_matches(self, match_record_ids: builtins.list[str]) -> APIObject:
         """Confirm suggested matches between connected account listings and locations."""
         data = self._post(
             "connected-accounts/confirm-matches",

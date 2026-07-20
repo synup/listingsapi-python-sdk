@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Any
 
 from listingsapi._types import APIObject
@@ -17,13 +18,13 @@ class Photos(APIResource):
         client.photos.add(16808, [{"photo": "https://example.com/img.jpg", "type": "ADDITIONAL"}])
     """
 
-    def list(self, location_id: str | int) -> list[APIObject]:
+    def list(self, location_id: str | int) -> builtins.list[APIObject]:
         """Get photos attached to a location."""
         data = self._location_get(location_id, "photos")
         items = data.get("data", {}).get("mediaFilesOfLocation") or []
         return [APIObject(item) for item in items]
 
-    def add(self, location_id: str | int, photos: list[dict[str, Any]]) -> APIObject:
+    def add(self, location_id: str | int, photos: builtins.list[dict[str, Any]]) -> APIObject:
         """Add photos to a location. Each item needs 'photo' (URL) and 'type' (LOGO, COVER, ADDITIONAL)."""
         data = self._post(
             "locations/photos",
@@ -31,7 +32,7 @@ class Photos(APIResource):
         )
         return APIObject(data.get("data", {}).get("addLocationPhotos") or {})
 
-    def remove(self, location_id: str | int, photo_ids: list[str]) -> APIObject:
+    def remove(self, location_id: str | int, photo_ids: builtins.list[str]) -> APIObject:
         """Remove photos from a location."""
         data = self._post(
             "locations/photos/remove",
@@ -39,7 +40,7 @@ class Photos(APIResource):
         )
         return APIObject(data.get("data", {}).get("removeLocationPhotos") or {})
 
-    def star(self, location_id: str | int, media_ids: list[str], *, starred: bool = True) -> APIObject:
+    def star(self, location_id: str | int, media_ids: builtins.list[str], *, starred: bool = True) -> APIObject:
         """Star or unstar photos. Max 4 starred photos per account."""
         data = self._post(
             "locations/photos/star",

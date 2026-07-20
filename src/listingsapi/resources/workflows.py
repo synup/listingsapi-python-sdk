@@ -134,7 +134,7 @@ class Workflows(APIResource):
 
         review_overview = reviews.analytics.overview(location_id, **date_params).to_dict()
 
-        review_page = reviews.list(location_id, first=50, **date_params)
+        review_page = reviews.list(location_id, first=50, start_date=start_date, end_date=end_date)
         recent_reviews = [r.to_dict() for r in review_page]
 
         google = analytics.google(location_id, from_date=start_date, to_date=end_date).to_dict()

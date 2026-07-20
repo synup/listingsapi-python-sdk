@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 from typing import Any
 
@@ -79,11 +80,11 @@ class Reviews(APIResource):
         after: str | None = None,
         before: str | None = None,
         last: int | None = None,
-        site_urls: list[str] | None = None,
+        site_urls: builtins.list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         category: str | None = None,
-        rating_filters: list[int] | None = None,
+        rating_filters: builtins.list[int] | None = None,
     ) -> SyncPage:
         """List reviews for a location with optional filters."""
         params: dict[str, Any] = {}
@@ -155,7 +156,7 @@ class Reviews(APIResource):
         data = self._location_get(location_id, "reviews/settings")
         return APIObject(data.get("data", {}).get("interactionsSetting") or {})
 
-    def edit_settings(self, location_id: str | int, site_urls: list[dict[str, Any]]) -> APIObject:
+    def edit_settings(self, location_id: str | int, site_urls: builtins.list[dict[str, Any]]) -> APIObject:
         """Update review source URLs for a location."""
         data = self._post(
             "locations/reviews/settings/edit",
@@ -163,7 +164,7 @@ class Reviews(APIResource):
         )
         return APIObject(data.get("data", {}).get("editInteractionsSetting") or {})
 
-    def details(self, interaction_ids: list[str]) -> APIObject:
+    def details(self, interaction_ids: builtins.list[str]) -> APIObject:
         """Get detailed info for specific reviews by ID."""
         if not interaction_ids:
             return APIObject({})
@@ -172,12 +173,12 @@ class Reviews(APIResource):
 
     def phrases(
         self,
-        location_ids: list[str],
+        location_ids: builtins.list[str],
         *,
-        site_urls: list[str] | None = None,
+        site_urls: builtins.list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
-    ) -> list[APIObject]:
+    ) -> builtins.list[APIObject]:
         """Get commonly mentioned phrases from reviews."""
         if not location_ids:
             return []
@@ -192,7 +193,7 @@ class Reviews(APIResource):
         items = data.get("data", {}).get("newReviewPhrases") or []
         return [APIObject(item) for item in items]
 
-    def site_config(self) -> list[APIObject]:
+    def site_config(self) -> builtins.list[APIObject]:
         """Get eligible review sites for the account."""
         data = self._get("reviews/site-config")
         items = data.get("data", {}).get("interactionSiteConfig") or []

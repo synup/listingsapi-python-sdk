@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import json
 from typing import Any
 
@@ -78,7 +79,7 @@ class Locations(APIResource):
             raise NotFoundError(f"Location {location_id} not found", status_code=404)
         return results[0]
 
-    def list_by_ids(self, location_ids: list[str | int]) -> list[APIObject]:
+    def list_by_ids(self, location_ids: builtins.list[str | int]) -> builtins.list[APIObject]:
         """Get locations by a list of IDs (numeric or base64)."""
         if not location_ids:
             return []
@@ -87,7 +88,7 @@ class Locations(APIResource):
         items = data.get("data", {}).get("getLocationsByIds") or []
         return [APIObject(item) for item in items]
 
-    def list_by_store_codes(self, store_codes: list[str]) -> list[APIObject]:
+    def list_by_store_codes(self, store_codes: builtins.list[str]) -> builtins.list[APIObject]:
         """Get locations matching the given store codes."""
         if not store_codes:
             return []
@@ -99,7 +100,7 @@ class Locations(APIResource):
         self,
         query: str,
         *,
-        fields: list[str] | None = None,
+        fields: builtins.list[str] | None = None,
         first: int | None = None,
         after: str | None = None,
         before: str | None = None,
@@ -168,11 +169,11 @@ class Locations(APIResource):
         website: str | None = None,
         store_id: str | None = None,
         hide_address: bool | None = None,
-        business_hours: list[dict[str, Any]] | None = None,
-        folder_ids: list[str] | None = None,
+        business_hours: builtins.list[dict[str, Any]] | None = None,
+        folder_ids: builtins.list[str] | None = None,
         service_area: dict[str, Any] | None = None,
-        place_action_links: list[dict[str, Any]] | None = None,
-        enabled_site_ids: list[int] | None = None,
+        place_action_links: builtins.list[dict[str, Any]] | None = None,
+        enabled_site_ids: builtins.list[int] | None = None,
         additional_fields: dict[str, Any] | None = None,
     ) -> APIObject:
         """Create a location in one call with every mandatory field as a keyword argument.
@@ -222,7 +223,7 @@ class Locations(APIResource):
             )
             print(result.location.id)
         """
-        problems: list[str] = []
+        problems: builtins.list[str] = []
         if not name or not (2 <= len(name.strip()) <= 150):
             problems.append("name must be 2-150 characters")
         if not description or len(description.strip()) < 200:
@@ -276,7 +277,7 @@ class Locations(APIResource):
         data = self._post("locations/update", {"input": input})
         return APIObject(data.get("data", {}).get("updateLocation") or {})
 
-    def archive(self, location_ids: list[str | int]) -> APIObject:
+    def archive(self, location_ids: builtins.list[str | int]) -> APIObject:
         """Archive one or more locations."""
         encoded = [encode_location_id(lid) for lid in location_ids]
         data = self._post("locations/archive", {"input": {"locationIds": encoded}})
@@ -284,7 +285,7 @@ class Locations(APIResource):
 
 
     def cancel_archive(
-        self, location_ids: list[str | int], selection_type: str, changed_by: str
+        self, location_ids: builtins.list[str | int], selection_type: str, changed_by: str
     ) -> APIObject:
         """Cancel a scheduled archival."""
         encoded = [encode_location_id(lid) for lid in location_ids]

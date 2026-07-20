@@ -388,7 +388,7 @@ def test_analytics_google(client):
 
 
 def test_version():
-    assert listingsapi.__version__ == "0.5.0"
+    assert listingsapi.__version__ == "0.5.1"
 
 
 # --- locations.add (one-call create with validation) ---
